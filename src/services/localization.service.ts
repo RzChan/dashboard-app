@@ -29,7 +29,8 @@ export function getLang(): ViewLanguage {
 
 	// If not found, take en as fallback
 	if (!selectedLang) {
-		supportedLanguages.find(l => l.langCode === 'en');
+		// supportedLanguages.find(l => l.langCode === 'en');
+		selectedLang = supportedLanguages.find(l => l.langCode === 'en');
 	}
 
 	return selectedLang as ViewLanguage;
