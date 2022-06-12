@@ -36,34 +36,37 @@ export const API_KEY_HEADER = 'authentication';
 
 /** The app router routes */
 export const AppRoutes = {
-	login: {
-		path: '/login',
-	},
-	dashboard: {
-		path: '/dashboard',
-	},
+    login: {
+        path: '/login',
+    },
+    dashboard: {
+        path: '/dashboard',
+    },
 }
 
 /** The nested dashboard router routes */
 export const DashboardRoutes = {
-	minions: {
-		path: `${AppRoutes.dashboard.path}/minions`,
-		param: 'id',
-	},
-	users: {
-		path: `${AppRoutes.dashboard.path}/users`,
-		param: 'id',
-	},
-	network: {
-		path: `${AppRoutes.dashboard.path}/network`,
-	},
-	settings: {
-		path: `${AppRoutes.dashboard.path}/settings`,
-	},
-	profile: {
-		path: `${AppRoutes.dashboard.path}/profile`,
-		param: 'id',
-	},
+    minions: {
+        path: `${AppRoutes.dashboard.path}/minions`,
+        param: 'id',
+    },
+    users: {
+        path: `${AppRoutes.dashboard.path}/users`,
+        param: 'id',
+    },
+    network: {
+        path: `${AppRoutes.dashboard.path}/network`,
+    },
+    bluetooth: {
+        path: `${AppRoutes.dashboard.path}/bluetooth`,
+    },
+    settings: {
+        path: `${AppRoutes.dashboard.path}/settings`,
+    },
+    profile: {
+        path: `${AppRoutes.dashboard.path}/profile`,
+        param: 'id',
+    },
 }
 
 /** The path for shown creation minion view */

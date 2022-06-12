@@ -5,6 +5,10 @@ import nodeFetch from 'node-fetch';
 import fs from 'fs';
 import path from 'path';
 import jszip from 'jszip';
+import dotenv from 'dotenv'
+
+// read env file
+dotenv.config();
 
 // #region Commons
 // Build API based on develop branch, unless it's build for main branch, then use main branch API.
@@ -12,16 +16,18 @@ const ENV_BRANCH = process.env.BRANCH !== 'main' ? 'development' : 'master';
 const SELF_NAME = 'generate-api.js';
 const NODE_BUFFER = 'nodebuffer';
 
-console.log(`[generate-api] Generating API for branch "${process.env.BRANCH}" from server "${ENV_BRANCH}" branch...`);
+console.log(`[generate-api] Generating API from swagger path ${process.env.SWAGGER_JSON_PATH}`);
+
+const swaggerJsonContent = fs.readFileSync(process.env.SWAGGER_JSON_PATH, "utf8");
 
 const SWAGGER_GEN_REQUEST_BODY = {
-	lang: 'typescript-fetch',
-	specURL: `https://raw.githubusercontent.com/casanet/casanet-server/${ENV_BRANCH}/backend/src/swagger.json`,
-	type: 'CLIENT',
-	codegenVersion: 'V3',
-	options: {
-		supportsES6: true,
-	},
+    lang: 'typescript-fetch',
+    spec: swaggerJsonContent,
+    type: 'CLIENT',
+    codegenVersion: 'V3',
+    options: {
+        supportsES6: true,
+    },
 };
 // #endregion Commons
 
@@ -96,12 +102,12 @@ const PROXY_GETTER_STATEMENT_FORMAT = '\
  * @return {void}
  */
 function mkdirRecursive(dirPath) {
-	if (fs.existsSync(dirPath)) {
-		return;
-	}
-	const dirname = path.dirname(dirPath);
-	mkdirRecursive(dirname);
-	fs.mkdirSync(dirPath);
+    if (fs.existsSync(dirPath)) {
+        return;
+    }
+    const dirname = path.dirname(dirPath);
+    mkdirRecursive(dirname);
+    fs.mkdirSync(dirPath);
 }
 
 /**
@@ -111,8 +117,8 @@ function mkdirRecursive(dirPath) {
  * @param {string} fileName The file's name
  */
 async function depositFile(jsZip, fileName) {
-	const fileBuffer = await jsZip.file(fileName).async(NODE_BUFFER);
-	fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, fileName), fileBuffer);
+    const fileBuffer = await jsZip.file(fileName).async(NODE_BUFFER);
+    fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, fileName), fileBuffer);
 }
 
 /**
@@ -122,7 +128,7 @@ async function depositFile(jsZip, fileName) {
  * @return {string[]}
  */
 function createImportStatement(importNames) {
-	return `import { ${importNames.join(', ')} } from '../api/api'`;
+    return `import { ${importNames.join(', ')} } from '../api/api'`;
 }
 
 /**
@@ -134,37 +140,37 @@ function createImportStatement(importNames) {
  * @return {string[]} An array of the API class names defined in `api.ts`
  */
 async function createApiTs(jsZip) {
-	// Read the file from the archive
-	let fileContents = (await jsZip.file(API_TS).async(NODE_BUFFER)).toString();
+    // Read the file from the archive
+    let fileContents = (await jsZip.file(API_TS).async(NODE_BUFFER)).toString();
 
-	// Replace 'portableFetch' with regular 'fetch' if swagger gen this kind of fetch method
-	fileContents = fileContents.replace(PORTABLE_PORTABLE_FETCH_REGEX, PORTABLE_FETCH_REWRITE_CONTENT);
+    // Replace 'portableFetch' with regular 'fetch' if swagger gen this kind of fetch method
+    fileContents = fileContents.replace(PORTABLE_PORTABLE_FETCH_REGEX, PORTABLE_FETCH_REWRITE_CONTENT);
 
-	// Replace 'isomorphicFetch' with regular 'fetch' if swagger gen this kind of fetch method
-	fileContents = fileContents.replace(PORTABLE_ISOMORPHIC_FETCH_REGEX, PORTABLE_FETCH_ISOMORPHIC_REWRITE_CONTENT);
+    // Replace 'isomorphicFetch' with regular 'fetch' if swagger gen this kind of fetch method
+    fileContents = fileContents.replace(PORTABLE_ISOMORPHIC_FETCH_REGEX, PORTABLE_FETCH_ISOMORPHIC_REWRITE_CONTENT);
 
-	// Replace the BASE_PATH variable with a reference to envFacade.apiPath
-	fileContents = fileContents.replace(BASE_PATH_REGEX, BASE_PATH_REWRITE_CONTENT);
+    // Replace the BASE_PATH variable with a reference to envFacade.apiPath
+    fileContents = fileContents.replace(BASE_PATH_REGEX, BASE_PATH_REWRITE_CONTENT);
 
-	// Add the "credentials: 'include'" option to all APIs
-	fileContents = fileContents.replace(INJECT_PARAMS_FIND_REGEX, INJECT_PARAMS_FIND_CONTENT);
+    // Add the "credentials: 'include'" option to all APIs
+    fileContents = fileContents.replace(INJECT_PARAMS_FIND_REGEX, INJECT_PARAMS_FIND_CONTENT);
 
-	// In order to allow delete optional search param, set 'url.parse' return as any.
-	fileContents = fileContents.split(URL_PARSE_ISSUES_RETURNED).join(URL_PARSE_FIXED_CONTENT);
+    // In order to allow delete optional search param, set 'url.parse' return as any.
+    fileContents = fileContents.split(URL_PARSE_ISSUES_RETURNED).join(URL_PARSE_FIXED_CONTENT);
 
-	// Replace all BASE_PATH with the 'envFacade.apiUrl' to allow change the api url on demand
-	fileContents = fileContents.split(BASE_PATH_ENV_VAR).join(BASE_PATH_REPLACEMENT);
+    // Replace all BASE_PATH with the 'envFacade.apiUrl' to allow change the api url on demand
+    fileContents = fileContents.split(BASE_PATH_ENV_VAR).join(BASE_PATH_REPLACEMENT);
 
-	// From some reason, swagger ge, creates the props'switch' with underscore prefix.
-	fileContents = fileContents.replace(SWITCH_NAME_GEN_ISSUES, SWITCH_NAME_GEN_CONTENT);
+    // From some reason, swagger ge, creates the props'switch' with underscore prefix.
+    fileContents = fileContents.replace(SWITCH_NAME_GEN_ISSUES, SWITCH_NAME_GEN_CONTENT);
 
-	// Write the file to the output path
-	fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, API_TS), fileContents);
+    // Write the file to the output path
+    fs.writeFileSync(path.join(SWAGGER_API_OUTPUT_PATH, API_TS), fileContents);
 
-	// Find all class definitions deriving from the BaseAPI class and return their names as an array
-	const apiClasses = fileContents.matchAll(CLASS_DEFS_REGEX);
-	const proxiesToEmit = Array.from(apiClasses).map((match) => match.groups.className);
-	return proxiesToEmit;
+    // Find all class definitions deriving from the BaseAPI class and return their names as an array
+    const apiClasses = fileContents.matchAll(CLASS_DEFS_REGEX);
+    const proxiesToEmit = Array.from(apiClasses).map((match) => match.groups.className);
+    return proxiesToEmit;
 }
 
 /**
@@ -176,33 +182,33 @@ async function createApiTs(jsZip) {
  * @param {string[]} proxiesToEmit An array of class names to generate getters for
  */
 function emitProxiesFile(proxiesToEmit) {
-	// Delete the generated file, if it already exists
-	if (fs.existsSync(PROXY_EMISSION_OUTPUT_FILE)) {
-		fs.unlinkSync(PROXY_EMISSION_OUTPUT_FILE);
-	}
+    // Delete the generated file, if it already exists
+    if (fs.existsSync(PROXY_EMISSION_OUTPUT_FILE)) {
+        fs.unlinkSync(PROXY_EMISSION_OUTPUT_FILE);
+    }
 
-	// Ensure the output directory exists
-	mkdirRecursive(PROXY_EMISSION_OUTPUT_DIR);
+    // Ensure the output directory exists
+    mkdirRecursive(PROXY_EMISSION_OUTPUT_DIR);
 
-	// Emit static imports
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, AUTO_GEN_COMMENT);
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, PROXY_CORE_IMPORT_STATEMENT);
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, CRED_MGR_IMPORT_STATEMENT);
+    // Emit static imports
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, AUTO_GEN_COMMENT);
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, PROXY_CORE_IMPORT_STATEMENT);
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, CRED_MGR_IMPORT_STATEMENT);
 
-	// Emit dynamic imports (all classes from the Swagger generated code)
-	const importStatement = createImportStatement(proxiesToEmit);
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, importStatement);
+    // Emit dynamic imports (all classes from the Swagger generated code)
+    const importStatement = createImportStatement(proxiesToEmit);
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, importStatement);
 
-	// Emit the Facade class's beginning
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, FACADE_CLASS_START_STATEMENT);
+    // Emit the Facade class's beginning
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, FACADE_CLASS_START_STATEMENT);
 
-	// Emit a getter for each proxy
-	for (const proxyToEmit of proxiesToEmit) {
-		fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, PROXY_GETTER_STATEMENT_FORMAT.replace(/\{0\}/g, proxyToEmit));
-	}
+    // Emit a getter for each proxy
+    for (const proxyToEmit of proxiesToEmit) {
+        fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, PROXY_GETTER_STATEMENT_FORMAT.replace(/\{0\}/g, proxyToEmit));
+    }
 
-	// Emit the facade class's end
-	fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, FACADE_CLASS_END_STATEMENT);
+    // Emit the facade class's end
+    fs.appendFileSync(PROXY_EMISSION_OUTPUT_FILE, FACADE_CLASS_END_STATEMENT);
 }
 
 /**
@@ -211,41 +217,41 @@ function emitProxiesFile(proxiesToEmit) {
  * @param {*} sourceDestination The path/name where to place the fetched file
  */
 async function downloadSourceFile(filePath, sourceDestination) {
-	const sharedModelsResponse = await nodeFetch(filePath);
-	const sharedModelsResponseBuffer = await sharedModelsResponse.buffer();
-	fs.writeFileSync(path.join(sourceDestination), AUTO_GEN_COMMENT);
-	fs.appendFileSync(path.join(sourceDestination), sharedModelsResponseBuffer);
+    const sharedModelsResponse = await nodeFetch(filePath);
+    const sharedModelsResponseBuffer = await sharedModelsResponse.buffer();
+    fs.writeFileSync(path.join(sourceDestination), AUTO_GEN_COMMENT);
+    fs.appendFileSync(path.join(sourceDestination), sharedModelsResponseBuffer);
 }
 
 (async () => {
-	// Send a Swagger Generation request
-	const generateClient = {
-		method: 'POST',
-		body: JSON.stringify(SWAGGER_GEN_REQUEST_BODY),
-		headers: { 'Content-Type': 'application/json', Accept: 'application/octet-stream' },
-	};
+    // Send a Swagger Generation request
+    const generateClient = {
+        method: 'POST',
+        body: JSON.stringify(SWAGGER_GEN_REQUEST_BODY),
+        headers: { 'Content-Type': 'application/json', Accept: 'application/octet-stream' },
+    };
 
-	const genResponse = await nodeFetch('https://generator3.swagger.io/api/generate', generateClient);
-	const buffer = await genResponse.buffer();
+    const genResponse = await nodeFetch('https://generator3.swagger.io/api/generate', generateClient);
+    const buffer = await genResponse.buffer();
 
-	// 2: Extract generated API
-	const generatedZip = await jszip.loadAsync(buffer);
+    // 2: Extract generated API
+    const generatedZip = await jszip.loadAsync(buffer);
 
-	// Make sure the output directory exists
-	mkdirRecursive(SWAGGER_API_OUTPUT_PATH);
+    // Make sure the output directory exists
+    mkdirRecursive(SWAGGER_API_OUTPUT_PATH);
 
-	// Drop some of the Swagger generated files as-is
-	await depositFile(generatedZip, CONFIGURATION_TS);
-	await depositFile(generatedZip, CUSTOM_D_TS);
-	await depositFile(generatedZip, INDEX_TS);
+    // Drop some of the Swagger generated files as-is
+    await depositFile(generatedZip, CONFIGURATION_TS);
+    await depositFile(generatedZip, CUSTOM_D_TS);
+    await depositFile(generatedZip, INDEX_TS);
 
-	// Modify and drop the api.ts file
-	const apiClassNames = await createApiTs(generatedZip);
+    // Modify and drop the api.ts file
+    const apiClassNames = await createApiTs(generatedZip);
 
-	// Emit a Facade class with a getter for every API class in the api.ts file.
-	emitProxiesFile(apiClassNames);
+    // Emit a Facade class with a getter for every API class in the api.ts file.
+    emitProxiesFile(apiClassNames);
 
-	// Download the latest channel TS spec API
-	await downloadSourceFile(`https://raw.githubusercontent.com/casanet/casanet-server/${ENV_BRANCH}/backend/src/models/remote2localProtocol.ts`, CHANNEL_SPEC_PATH);
-	await downloadSourceFile(`https://raw.githubusercontent.com/casanet/casanet-server/${ENV_BRANCH}/backend/src/models/sharedInterfaces.d.ts`, SHARED_MODELS_PATH);
+    // Download the latest channel TS spec API
+    await downloadSourceFile(`https://raw.githubusercontent.com/casanet/casanet-server/${ENV_BRANCH}/backend/src/models/remote2localProtocol.ts`, CHANNEL_SPEC_PATH);
+    await downloadSourceFile(`https://raw.githubusercontent.com/casanet/casanet-server/${ENV_BRANCH}/backend/src/models/sharedInterfaces.d.ts`, SHARED_MODELS_PATH);
 })();
