@@ -72,6 +72,9 @@ export const DashboardRoutes = {
 /** The path for shown creation minion view */
 export const CREATE_MINION_PATH = `${DashboardRoutes.minions.path}/create-new-minion`;
 
+/** The path for shown creation minion view */
+export const CREATE_BLUETOOTH_MINION_PATH = `${DashboardRoutes.minions.path}/create-new-bluetooth-minion`;
+
 /** The path for shown creation user view */
 export const CREATE_USER_PATH = `${DashboardRoutes.users.path}/create-new-user`;
 

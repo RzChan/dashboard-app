@@ -8,7 +8,7 @@ import { LocalStorageKey, setLocalStorageItem, getLocalStorageItem } from "../..
 import { Minion } from "../../infrastructure/generated/api";
 import { MinionOverview } from "../../components/minions/MinionOverview";
 import { minionsService } from "../../services/minions.service";
-import { CREATE_MINION_PATH, GRID_CARDS_RATION_STEP } from "../../infrastructure/consts";
+import { CREATE_MINION_PATH, CREATE_BLUETOOTH_MINION_PATH, GRID_CARDS_RATION_STEP } from "../../infrastructure/consts";
 import { MinionFullInfo } from "../../components/minions/MinionFullInfo";
 import { useLocation, useParams } from "react-router-dom";
 import { Loader } from "../../components/Loader";
@@ -18,6 +18,7 @@ import { NoContent } from "../../components/NoContent";
 import WbIncandescentIcon from '@material-ui/icons/WbIncandescent';
 import { ThemeTooltip } from "../../components/global/ThemeTooltip";
 import { CreateMinion } from "../../components/minions/CreateMinion";
+// import { CreateBluetoothMinion } from "../../components/minions/CreateBluetoothMinion";
 import { useData } from "../../hooks/useData";
 import { PageLayout } from "../../components/layouts/PageLayout";
 
@@ -104,11 +105,20 @@ export default function Minions(props: DashboardPageInjectProps) {
 	// Show minion info if there is an id and the id match some minion
 	const showMinionFullInfo = !!id && !!selectedMinion;
 
+	// Show minion info if there is an id and the id match some minion
+	// const showBluetoothMinionFullInfo = !!id && !!selectedMinion;
+
 	// Show minion creation view, if the path match minion creation  
 	const showCreateMinion = location?.pathname === CREATE_MINION_PATH;
 
 	// Show side view in case of minion selected or minion creation
 	const minionSideContainer = showMinionFullInfo || showCreateMinion;
+
+	// Show minion creation view, if the path match minion creation  
+	// const showCreateBluetoothMinion = location?.pathname === CREATE_BLUETOOTH_MINION_PATH;
+
+	// Show side view in case of bluetooth minion selected or bluetooth minion creation
+	// const bluetoothMinionSideContainer = showBluetoothMinionFullInfo || showCreateBluetoothMinion;
 
 	// As default, the side info is empty
 	let SideInfo = <div></div>;
@@ -135,6 +145,25 @@ export default function Minions(props: DashboardPageInjectProps) {
 			SideInfo = <MinionFullInfo minion={selectedMinion} />;
 		}
 	}
+
+	// // If case of bluetooth minion creation, do not check if there are bluetooth minions for now :)
+	// if (showCreateBluetoothMinion) {
+	// 	SideInfo = <CreateBluetoothMinion />;
+	// } else {
+	// 	// If there are no any minion, show proper message
+	// 	if (minions.length === 0) {
+	// 		return <NoContent Icon={WbIncandescentIcon} message={t('dashboard.minions.no.minions.message')} />
+	// 	}
+
+	// 	// If there are no any minion match the search, show proper message
+	// 	if (filteredMinions.length === 0) {
+	// 		return <NoContent Icon={WbIncandescentIcon} message={t('dashboard.minions.no.minions.match.message')} />
+	// 	}
+
+	// 	if (showMinionFullInfo) {
+	// 		SideInfo = <MinionFullInfo minion={selectedMinion} />;
+	// 	}
+	// }
 
 	return <PageLayout
 		showSideInfo={minionSideContainer}

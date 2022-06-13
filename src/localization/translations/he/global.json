@@ -88,6 +88,8 @@
     "dashboard.toolbar.pages.collapse.toolbar": "הסתר את סרגל הכלים",
     "dashboard.toolbar.pages.minions.create.minion": "יצירת מיניון",
     "dashboard.toolbar.pages.minions.create.minion.tip": "פתח את יצירת תצוגת מיניון חדשה",
+    "dashboard.toolbar.pages.minions.create.bluetooth.minion": "Create bluetooth minion",
+    "dashboard.toolbar.pages.minions.create.bluetooth.minion.tip": "Open the create new bluetooth minion view",
     "dashboard.toolbar.pages.minions.refresh.tip": "משוך שוב את סטטוס המניונים מהשרת",
     "dashboard.toolbar.pages.minions.re.read": "קרא שוב",
     "dashboard.toolbar.pages.minions.re.read.tip": "קרא שוב את כל סטטוס המיניונים מבלי לסרוק מחדש את הרשת",

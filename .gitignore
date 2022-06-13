@@ -3,6 +3,7 @@
 /platforms
 /plugins
 /www/*
+/dashboard/*
 /build/*
 /temp-mock/*
 /temp-e2e/*

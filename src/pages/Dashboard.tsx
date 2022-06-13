@@ -33,6 +33,7 @@ import Collapse from '@mui/material/Collapse';
 import { PageToolbarExtender } from "../components/dashboard/PageToolbarExtender";
 import { PageToolbarContainer } from "../components/dashboard/PageToolbar";
 import { MinionsToolbar } from "../components/toolbars/MinionsToolbar";
+import { BluetoothToolbar } from "../components/toolbars/BluetoothToolbar";
 import { left, marginLeft } from "../logic/common/themeUtils";
 import casanetLogo from '../static/logo-app.png';
 import { NetworkToolbar } from "../components/toolbars/NetworkToolbar";
@@ -136,6 +137,7 @@ const dashboardPages: DashboardPage[] = [
         route: DashboardRoutes.bluetooth.path,
         components: Bluetooth,
         supportedSearch: true,
+        toolbar: BluetoothToolbar
     },
     {
         icon: <PeopleAltIcon />,
